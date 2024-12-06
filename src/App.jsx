@@ -1,55 +1,84 @@
 import { useEffect, useState } from "react";
 import AddTask from "./components/AddTask";
 import Tasks from "./components/Tasks";
-import { v4 } from "uuid";
 import Title from "./components/Title";
 
+// const BASE_URL = "http://192.168.0.100:3000/task";
+const BASE_URL = "https://tasklist-api-88rl.onrender.com/task";
+
+const app = {
+  ownerEmail: "app@nuratech.com",
+  appId: "Curso-React",
+};
+
 function App() {
-  const [tasks, setTasks] = useState(
-    JSON.parse(localStorage.getItem("tasks")) || []
-  );
+  const [tasks, setTasks] = useState([]);
+
+  const deleteTask = async (taskId) => {
+    const response = await fetch(BASE_URL + "/" + taskId, {
+      method: "DELETE",
+    });
+    const deletedTask = await response.json();
+    alert(`Task "${deletedTask.title}" deletada com sucesso!`);
+  };
+
+  const getTasks = async () => {
+    const responseTaskList = await fetch(
+      `${BASE_URL}?ownerEmail=${app.ownerEmail}&appId=${app.appId}`,
+      {
+        method: "GET",
+      }
+    );
+    const dataTaskList = await responseTaskList.json();
+    setTasks(dataTaskList);
+  };
+
+  const createTask = async (task) => {
+    const response = await fetch(BASE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ...task, ...app }),
+    });
+    const newTask = await response.json();
+    alert(`Task "${newTask.title}" criada com sucesso!`);
+  };
+
+  const updateTaskStatus = async (taskId, status) => {
+    const response = await fetch(BASE_URL + "/" + taskId, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status: status.toString() }),
+    });
+    const updatedTask = await response.json();
+    alert(`Task "${updatedTask.title}" atualizada com sucesso!`);
+  };
 
   useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
+    getTasks();
+  }, []);
 
-  // useEffect(() => {
-  //   const fetchTasks = async () => {
-  //     const response = await fetch(
-  //       "https://jsonplaceholder.typicode.com/todos?_limit=10",
-  //       {
-  //         method: "GET",
-  //       }
-  //     );
-  //     const data = await response.json();
-  //     setTasks(data);
-  //   };
-  //   fetchTasks();
-  // }, []);
-
-  function onTaskClick(taskId) {
-    const newTasks = tasks.map((task) => {
-      if (task.id === taskId) {
-        return { ...task, isCompleted: !task.isCompleted };
-      }
-      return task;
-    });
-    setTasks(newTasks);
+  async function onTaskClick(taskId, status) {
+    await updateTaskStatus(taskId, status);
+    await getTasks();
   }
 
-  function onDeleteTaskClick(taskId) {
-    const newTasks = tasks.filter((task) => task.id !== taskId);
-    setTasks(newTasks);
+  async function onDeleteTaskClick(taskId) {
+    await deleteTask(taskId);
+    await getTasks();
   }
 
-  function onAddTaskSubmit(title, description) {
+  async function onAddTaskSubmit(title, description) {
     const newTask = {
-      id: v4(),
       title,
       description,
-      isCompleted: false,
+      status: "todo",
     };
-    setTasks([...tasks, newTask]);
+    await createTask(newTask);
+    await getTasks();
   }
 
   return (
