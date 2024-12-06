@@ -18,13 +18,13 @@ function Tasks({ tasks, onTaskClick, onDeleteTaskClick }) {
         <li key={task.id} className="flex gap-2">
           <button
             onClick={() => {
-              onTaskClick(task.id);
+              onTaskClick(task.id, task.status === "done" ? "todo" : "done");
             }}
             className={`bg-slate-400 text-left text-white p-2 rounded-md w-full flex items-center gap-2 ${
-              task.isCompleted && "line-through"
+              task.status === "done" ? "line-through" : ""
             }`}
           >
-            {task.isCompleted && <CheckIcon />}
+            {task.status === "done" ? <CheckIcon /> : null}
             {task.title}
           </button>
           <Button onClick={() => onSeeDetailsClick(task)}>
